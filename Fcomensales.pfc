@@ -1,0 +1,65 @@
+program Fcomensales;
+
+(* monitor *)
+monitor cena;
+export coger, soltar;
+const N = 5;
+var
+	estado: array[0..N] of integer;
+	dormido: array[0..N] of condition;
+	i: integer;
+
+procedure evaluar(k :integer);
+begin
+	if ( (estado[k] = 0) and ( estado[(k+N-1) mod N] <> 1 ) and ( estado[(k+1) mod N] <> 1 ) ) then
+	begin
+		estado[k] := 1;
+		resume(dormido[k]);
+	end;
+end;
+	
+procedure coger(i: integer);
+begin
+	estado[i] := 0;
+	evaluar(i);
+	if (estado[i] <> 1) then
+		delay(dormido[i]);
+end;
+
+procedure soltar(i : integer);
+begin
+	estado[i] := -1;
+	evaluar((i-1 + N) mod N);
+	evaluar((i+1) mod N);
+end;
+
+begin
+	for i:=0 to N do
+		estado[i] := -1;
+end;
+(* fin monitor *)
+
+(* procesos activos *)
+
+process type filosofo(i: integer);
+begin
+	repeat
+		writeln(i+1, ': PIENSA');
+		cena.coger(i);
+		writeln(i+1, ': COME');
+		cena.soltar(i);
+	forever
+end;
+
+var
+	fil: array[0..4] of filosofo;
+	aux: integer;
+	
+begin (* main program*)
+
+	cobegin
+		for aux:=0 to 4 do
+			fil[aux](aux);
+	coend
+	
+end.

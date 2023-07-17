@@ -1,0 +1,82 @@
+program lecEscritoress;
+
+(* PRIORIDAD EN LA ESCRITURA *)
+
+(* monitor *)
+monitor LE;
+export abrirLectura, cerrarLectura, abrirEscritura, cerrarEscritura;
+const N = 5;
+var
+	lec, writing : integer;
+	reader, writer : condition;
+	
+procedure abrirLectura;
+begin
+	if ((writing = 1) or not (empty(writer))) then
+		delay(reader);
+	lec := lec + 1;
+	resume(reader);
+end;
+
+procedure cerrarLectura;
+begin
+	lec := lec - 1;
+	if (lec = 0) then
+		resume(writer);
+end;
+
+procedure abrirEscritura;
+begin
+	if ((lec <> 0) or (writing = 1)) then
+		delay(writer);
+	writing := 1;
+end;
+
+procedure cerrarEscritura;
+begin
+	writing := 0;
+	if (empty(writer) = true) then
+		resume(reader)
+	else
+		resume(writer);
+end;
+
+begin
+	lec := 0;
+	writing := 0;
+end;
+(* fin monitor *)
+
+(* PROCESOS ACTIVOS *)
+process type lector;
+begin
+	repeat
+		LE.abrirLectura;
+		writeln('LEER EN EL RECURSO');
+		LE.cerrarLectura;
+	forever
+end;
+
+process type escritor;
+begin
+	repeat
+		LE.abrirEscritura;
+		writeln('ESCRIBIR EN EL RECURSO');
+		LE.cerrarEscritura;
+	forever
+end;
+
+
+var 
+	L: array[0..3] of lector;
+	E: array[0..3] of escritor;
+	i : integer;
+
+begin (* main *)
+
+	cobegin
+		for i:=0 to 3 do
+			L[i]; E[i];
+	coend
+
+end.

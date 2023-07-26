@@ -1,0 +1,94 @@
+EJERCICIO:
+
+Hacer un programa para controlar el funcionamiento de un puente levadizo en un rio navegable, tenemos vehículos y barcos que pueden atravesar el puente simultáneamente pero con exclusión mutua entre vehículos y barcos, teniendo los barcos prioridad en el paso.
+
+•	Imprimir mensaje que está pasando número de vehículo o número de barco
+•	Imprimir mensaje que el puente está subiendo para que pasen barcos, o el puente está bajando para que pasen vehículos
+
+PASCAL FC
+ 
+const nBarcos = 4;
+const nVehiculo = 3;
+
+var 
+	mutex , vehiculo : semaphore;
+	barco : integer; (*cantidad de barcos en el recurso*)
+	pantalla: semaphore; (*mejor impresion en pantalla*)
+
+process type barcos(i:integer);
+begin
+	repeat
+		(*protocolo de entrada;*)
+		wait(mutex);
+		barco := barco + 1;
+		if(barco = 1) then
+		begin
+			wait(vehiculo);
+			
+			wait(pantalla);
+			writeln('PUENTE SUBIENDO PARA EL PASO DE BARCOS');
+			signal(pantalla);
+			
+		end;	
+		signal(mutex);
+		
+		wait(pantalla);
+		writeln('BARCO [', i, '] CRUZANDO EL PUENTE');
+		signal(pantalla);
+		
+		wait(mutex);
+		barco := barco - 1;
+		(*protocolo de salida;*)
+		if (barco = 0) then
+		begin
+			signal(vehiculo);
+			
+			wait(pantalla);
+			writeln('PUENTE BAJANDO PARA EL PASO DE VEHICULOS');
+			signal(pantalla);
+			
+		end;
+			
+		signal(mutex);
+	forever
+end;
+
+process type vehiculos(i:integer);
+begin
+	repeat
+		(*protocolo de entrada;*)
+		wait(vehiculo);
+		
+		wait(pantalla);
+		writeln('VEHICULO [', i, '] CRUZANDO EL PUENTE');
+		signal(pantalla);
+		
+		(*protocolo de salida;*)
+		signal(vehiculo);
+	forever
+end;
+
+
+var 
+	i : integer;
+	B: array[0..nBarcos] of barcos;
+	V: array[0..nVehiculo] of vehiculos;
+
+
+begin (* main *)
+
+	initial(vehiculo,1);
+	initial(mutex,1);
+	initial(pantalla,1);
+	barco := 0;
+	
+	writeln('PROGRAMA - PUENTE LEVADIZO EN UN RIO NAVEGABLE (USANDO SEMAFOROS)');
+	
+	cobegin
+		for i:=0 to nBarcos do
+			B[i](i);
+			
+		for i:=0 to nVehiculo do
+			V[i](i);
+	coend
+end.

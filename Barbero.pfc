@@ -1,0 +1,70 @@
+program Barbero;
+
+const N=3;
+monitor Barbero;
+	export barber,customer;
+	var esperar:integer;
+		silla,nuevoCliente,barbero:condition;
+	procedure barber(i:integer);
+	begin
+		repeat
+			begin
+				delay(nuevoCliente);
+				delay(silla);
+				esperar:=esperar-1;
+				resume(barbero);
+				resume(silla);
+				writeln('El barbero ',i,' corta el pelo al cliente');
+			end;
+		until(esperar=0);
+	end;
+	
+	
+	procedure customer(i:integer);
+	begin
+		{delay(silla);}
+		if esperar<N then
+			begin
+				esperar:=esperar+1;
+				writeln('Cliente ',i,' esperando');
+				resume(nuevoCliente);
+				resume(silla);
+				{delay(barbero);}
+			end
+		else
+			begin
+				resume(silla);
+			end;
+	end;
+
+	begin
+		esperar:=0;
+	end;
+
+
+process type barber(i:integer);
+begin
+	repeat 
+	Barbero.barber(i);
+	forever
+end;
+
+process type customer(i:integer);
+begin;
+	repeat
+	Barbero.customer(i);
+	forever
+end;
+
+var i:integer;
+	c:array[1..3] of customer;
+	b:array[1..2] of barber;
+
+begin
+	cobegin
+		for i:=1 to 2 do
+			b[i](i);
+		for i:=1 to 3 do
+			c[i](i);
+	coend
+end.

@@ -1,0 +1,48 @@
+program ProductorConsumidor;
+
+const n = 3;
+
+var
+	libres, mutex, ocupados: semaphore;
+	final, frente, elemento: integer;
+	cola: array [0..n] of integer;
+
+process productor;
+begin
+	repeat
+		elemento := random(10); {producirElemento}
+		wait(libres);
+		wait(mutex);
+		cola[final] := elemento;
+		final := (final+1) mod n;
+		writeln('productor -> ', elemento);
+		signal(mutex);
+		signal(ocupados);
+		
+	forever
+end;
+
+process consumidor;
+begin
+	repeat
+		wait(ocupados);
+		wait(mutex);
+		elemento := cola[frente];
+		frente := (frente+1) mod n;
+		signal(mutex);
+		signal(libres);
+		writeln('consumidor -> ', elemento); {consumirElemento;}
+
+	forever
+end;
+
+begin
+	initial(mutex,1);
+	initial(ocupados,0);
+	initial(libres,n);
+	final := n;
+	frente :=  0;
+	cobegin
+		productor; consumidor;
+	coend;
+end.

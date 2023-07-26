@@ -1,0 +1,105 @@
+program lecaso3;
+
+(* TERCER CASO : PRIORIDAD EN LA ESCRITURA (SIN ESPERA OCUPADA) *)
+
+var 
+	mutex,writer,reader: semaphore;
+	lec,nle,nee : integer;
+	writing : boolean;
+	
+	
+process type lector;
+begin
+	repeat
+	(*protocolo de entrada;*)
+	(*if(nle>0) then
+		signal(reader);
+	else 
+		signal(mutex);
+	*)
+	wait(mutex);
+	(*mientras existen escritores en espera o algún escritor*)
+	(*este escribiendo esperar*)
+	if (writing = true or (nee > 0)) then
+	begin
+		nle:=nle+1;
+		signal(mutex);
+		wait(reader);
+		nle:=nle-1;
+	end;
+	
+	lec:=lec+1;
+	
+	if (nle>0) then
+		signal(reader)
+	else
+		signal(mutex);
+	
+	writeln('leer del recurso');
+	(*protocolo de salida;*)
+	wait(mutex);
+	lec:=lec-1;
+	
+	if((lec=0) and (nee>0))then
+		signal(writer)
+	else
+		signal(mutex);
+		
+	forever
+end;
+
+process type escritor;
+begin
+	repeat
+		wait(mutex);
+		(*Si se está escribiendo o existen lectores*)
+		(* el escritor debe ser bloqueado*)
+		if (writing=true or (lec>0))then
+		begin
+			nee:=nee+1;
+			signal(mutex);
+			wait(writer);
+			nee:=nee-1;
+		end;
+		
+		writing:=true;
+		signal(mutex);
+		writeln('Escribir recurso');
+		wait(mutex);
+		(*nee:=nee-1;*)
+		writing:=false;
+		(*desbloquear un escritor que esté en espera*)
+		(* sino desbloquear a un lector en espera*)
+		if(nee>0)then
+			signal(writer)
+		else
+			begin
+			if(nle>0) then
+				signal(reader)
+			else
+				signal(mutex);
+			end;
+	forever
+end;
+
+var 
+	i : integer;
+	LE: array[0..2] of lector;
+	ES: array[0..2] of escritor;
+	
+begin (* main *)
+
+	initial(mutex,1);
+	initial(writer,0);
+	initial(reader,0);
+	writing:=false;
+	lec:=0;
+	nle:=0;
+	nee:=0;
+	
+	cobegin
+		for i:=0 to 2 do
+		LE[i]; ES[i];
+	coend
+end.
+

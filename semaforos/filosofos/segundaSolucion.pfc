@@ -1,0 +1,34 @@
+program segundaSolucion;
+
+var 
+	palillo: array[0..4] of semaphore;
+	sitio : semaphore;
+	
+process type filosofo(i: integer);
+begin
+	repeat
+		writeln(i,' : Piensa');
+		wait(sitio);
+		wait(palillo[i]);
+		wait(palillo[(i+1) mod 5]);
+		writeln(i,' : Come');
+		signal(palillo[i]);
+		signal(palillo[(i+1) mod 5]);
+		signal(sitio);
+	forever
+end;
+
+var 
+	k,i : integer;
+	F: array[0..4] of filosofo;
+	
+begin (* main *)
+	initial(sitio,4);
+	for k:=0 to 4 do
+		initial(palillo[k],1);
+	cobegin
+		for k:=0 to 4 do
+			F[k](k);
+	coend 
+end.
+

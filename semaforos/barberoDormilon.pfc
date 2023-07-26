@@ -1,0 +1,58 @@
+program BarberoDormilon;
+
+var
+	mutex, clientes, barber: semaphore;
+	enespera, n: integer;
+	
+process type barbero;
+begin
+	repeat
+		repeat
+			wait(clientes);
+			wait(mutex);
+			enespera := enespera - 1;
+			signal(barber);
+			signal(mutex);
+			writeln('Cortando el cabello');
+		until (enespera <> 0)
+	forever
+end;
+
+process type clientela;
+begin
+	repeat
+		wait(mutex);
+		if (enespera < n) then
+		begin
+			enespera := enespera + 1;
+			writeln('Esperando');
+			signal(clientes);
+			signal(mutex);
+			wait(barber); 
+		end
+		else
+		begin
+			signal(mutex);
+		end
+	forever
+end;
+
+var
+	BR: array[0..1] of barbero;
+	C: array[0..4] of clientela;
+	
+begin
+	initial(mutex,1);
+	initial(clientes,0);
+	initial(barber,0);
+	n := 5;
+	enespera := 0;
+	cobegin
+		C[0];
+		C[1];
+		C[2];
+		C[3];
+		C[4];
+		BR[1];
+	coend;
+end.
